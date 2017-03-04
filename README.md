@@ -246,3 +246,54 @@ exprots = moduel.exports
 		</script>
 ```
 使用promise
+```
+		<script type="text/javascript">
+			var ball1 = document.querySelector(".ball1");
+			var ball2 = document.querySelector(".ball2");
+			var ball3 = document.querySelector(".ball3");
+			var Promise = window.Promise;
+			//动画函数
+			/**
+			 * 
+			 * @param {球} ball
+			 * @param {位置} distance
+			 * @param {回调函数} cb
+			 */
+			function promiseAnimate(ball,distance){
+				return new Promise(function(resolve,reject){
+					function _animate(){
+						setTimeout(function(){
+							var marginLeft = parseInt(ball.style.marginLeft,10)
+							//说明球到指定的位置
+							if(marginLeft === distance){
+								resolve();
+							}else{
+								//在左侧
+								if(marginLeft < distance){
+									marginLeft++;
+								}else{
+									marginLeft--;
+								}
+								ball.style.marginLeft = marginLeft+"px";
+								//console.log(ball.style.marginLeft);
+								_animate();
+							}
+						},13);
+					}
+					_animate();
+				});
+			}
+			promiseAnimate(ball1,100).then(function(){
+						return promiseAnimate(ball2,200)
+				}).then(function(){
+						return promiseAnimate(ball3,300)
+				}).then(function(){
+						return promiseAnimate(ball3,150)
+				}).then(function(){
+						return promiseAnimate(ball2,150)
+				}).then(function(){
+						return promiseAnimate(ball1,150)
+				});
+		</script>
+```
+今天就写到这了，明天有事，只有后天来接着写了
