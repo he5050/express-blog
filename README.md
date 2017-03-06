@@ -318,6 +318,7 @@ exprots = moduel.exports
 
 
 直接使用 `npm i` 安装的模块是不会写入` package.json` 的 `dependencies` (或 `devDependencies`)，需要额外加个参数:
+
 -  1.1 `npm i express --save/npm i express -S (安装 express，同时将 "express": "^4.14.0" 写入 dependencies )`
 -  1.2 `npm i express --save-dev/npm i express -D (安装 express，同时将 "express": "^4.14.0" 写入 devDependencies )`
 -  1.3 `npm i express --save --save-exact (安装 express，同时将 "express": "4.14.0" 写入 dependencies )`
@@ -337,6 +338,8 @@ exprots = moduel.exports
 我们要来分析一下app.js里面的内容,最少我们目录知道是能过require来引入相应的文件或是模块下面，我一行一行的分析是在干嘛的
 
 > 前面这些行使用require就是引入js文件 加载了express、path 等模块,以及 routes 文件夹下的index. js和 users.js 路由文件
+
+
 - 1.1 `var app = express() ` 用于生成一个express实例的app。
 - 1.2 `app.set('views',path.join(_dirname,'views'))` 设置views文件夹为存放视图文件的目录，也就是我们mvc当中的v视图模板文件的存存位置,_dirname为全局变量，存放着当正在执行的脚本所在目录
 - 1.3 `app.set('view engine','ejs')` 这里设置 视图模板引擎为 ejs。
@@ -348,6 +351,7 @@ exprots = moduel.exports
 - 1.9 `app.use(experss.static(path.join(_dirname,'public')))` 设置public文件为存放静态文件的目录也就是js,css images的文件目录
 - 1.10 `app.use('/'.,routes)`与 `app.use('/users',users)` 路由的控制器
 - 1.11  捕获404错误，并转发到错误处理器。
+
 ```
 app.use(function(req,res,next){
 	var err = new Error('Not Found');
@@ -355,7 +359,9 @@ app.use(function(req,res,next){
 	next(err);
 })
 ```
+
 - 1.12 开发环境下的错误处理器，将错误信息渲染error模版并显示到浏览器中。
+
 ```
 if(app.get('env') === 'development'){
 	app.use(function(err,req,res,next){
@@ -367,7 +373,9 @@ if(app.get('env') === 'development'){
 	});
 }
 ```
+
 - 1.13 生产环境下的错误处理器，将错误信息渲染error模版并显示到浏览器中。
+
 ```
 app.use(function(err,req,res,next){
 	res.status(err.status || 500);
@@ -382,6 +390,7 @@ app.use(function(err,req,res,next){
 > 关于app.js里面文件的内容
 
 我们接下来分析一下bin/www这个文件
+
 >
 ```
 #!/usr/bin/env node
@@ -478,22 +487,29 @@ function onListening() {
 
 - 2.1 `#!/usr/bin/env node` 表明是node可执行文件
 - 2.2 引入相应的模块与文件
+
 ```
 var app = require('../app');
 var debug = require('debug')('blog:server');
 var http = require('http');
 ```
+
 - 2.3  获取端口号如果没有设置 端口号则使用3000做为端口
+
 ```
 var port = normalizePort(process.env.PORT || '3000');
 app.set('port', port);
+
 ```
+
 - 2.4 `var server = http.createServer(app);`创建http服务
 - 2.5 监听http服务 关打印相应的错误信息
+
 ```
 server.listen(port);
 server.on('error', onError);
 server.on('listening', onListening);
+
 ```
 > 成功启动服务后会打印出来
 
@@ -503,6 +519,7 @@ server.on('listening', onListening);
 
 
 接下我们在来看下routes/index.js文件:
+
 ```
 var express = require('express');
 var router = express.Router();
@@ -517,9 +534,8 @@ module.exports = router;
 ```
 生成一个路由实例用来捕获访问主页的GET请求，导出这个路由并在app.js中通过app.use('/', routes); 加载。这样，当访问主页时，就会调用res.render('index', { title: 'Express' });渲染views/index.ejs模版并显示到浏览器中。
 我们来看下views/index.ejs文件是:
+
 ```
-<!DOCTYPE html>
-<html>
   <head>
     <title><%= title %></title>
     <link rel='stylesheet' href='/stylesheets/style.css' />
@@ -528,17 +544,20 @@ module.exports = router;
     <h1><%= title %></h1>
     <p>Welcome to <%= title %></p>
   </body>
-</html>
+
 
 ```
+
 在渲染模板时我们传入了一个变量 title 值为 express 字符串，模板引擎会将所有 <%= title %> 替换为 express ，然后将渲染后生成的html显示到浏览器中
 
 ***
 
 ## 6.路由控制
 - 1.普及一下路由知识
+
 > 这里又到了补充一点关于路由的知识了,各位小伙伴，我们接下来一起看看关于路由的一些知识，我们还是通过routes/index.js中的代码来做分析
 > ps: 关于前面的引入这一点，我就不做多的描述了，通过上面的学习估计也成为了新手上路了吧，来老老司机带路，直接进入高潮
+
 ```
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -546,9 +565,11 @@ router.get('/', function(req, res, next) {
 });
 
 ```
+
 我先说一下这段代码是什么意思:当我们访问根目录时候也就是home页/主页,调用ejs模板引擎,来渲染index.ejs的模板文件(即半title变量全部替换为这符串Express),
 然后生成 静态页面并显示在浏览器中。(先不论明白还是不懂,我还是要接下来说的)
 我们对上面的代码进行一下修改
+
 ```
 router.get('/', function(req, res) {
   res.send('hello, express');
@@ -558,31 +579,44 @@ router.get('/users/:name', function(req, res) {
   res.send('hello, ' + req.params.name);
 });
 ```
+
 我们运行后的结果如下:
 
 ![](http://p1.bqimg.com/567571/b89432910b61b61b.png)
 
 ![](http://i1.piimg.com/567571/d57591d7b5411a44.png)
 
-上面的代码意思是：当我访问根目录的时候，就直接返回你信息不在调用模板了直接返回`hello,express`,当访问如:`127.0.0.1:3000/users/my`路径的时,返回是hello,my。
+上面的代码意思是：当我访问根目录的时候，就直接返回你信息不在调用模板了直接返回`hello,express`,
+当访问如:`127.0.0.1:3000/users/my`路径的时,返回是hello,my。
 路径中:name就相当于一个传过来的值或是叫占位符,我们通过`req.params,name`取到了传进来的值/占位符的具体内容。
+
 > express使用[path-toregexp](https://www.npmjs.com/package/path-to-regexp)模块实现的路由的匹配。
 
-通过上面的例子，我们不难看出req包含了请求来的相关信息,res则返回该请求的的响应信息,更多请查询[express官方文档](http://www.expressjs.com.cn/4x/api.html#req)下面介绍几处常用的req属性
+
+通过上面的例子，我们不难看出req包含了请求来的相关信息,res则返回该请求的的响应信息,
+更多请查询[express官方文档](http://www.expressjs.com.cn/4x/api.html#req)下面介绍几处常用的req属性
+
 > 1 req.query:解析后的url中的querystring,如?name=heihei,req.query的值就为{name:'heihei'}
 > 2 req.params:解析url中的占位符,如/:name,访问的/heihei,req,params的值为{name:'heihei'}
-> 3 req.body 解析讨请求体(需要相应的模块),如[body-parser](https://www.npmjs.com/package/body-parser),请求体为{'name':'heihei'},则req.body为{name:'heihei'}
+> 3 req.body 解析讨请求体(需要相应的模块),如[body-parser](https://www.npmjs.com/package/body-parser),
+请求体为{'name':'heihei'},则req.body为{name:'heihei'}
+
 
 > 上面只是很简单的路由使用的例子（将所有路由控制函数都放到了 index.js），但在实际开发中通常有几十甚至上百的路由,都写在 index.js 既臃肿又不好维护。
 > 所以通常会在项目目录里面会有一个routes文件夹,里面会存放index.js与users.js
-> 我们将 / 和 /users/:name 的路由分别放到了 routes/index.js 和 routes/users.js 中，每个路由文件通过生成一个 express.Router 实例 router 并导出，通过 app.use 挂载到不同的路径。
+> 我们将 / 和 /users/:name 的路由分别放到了 routes/index.js 和 routes/users.js 中，
+每个路由文件通过生成一个 express.Router 实例 router 并导出，通过 app.use 挂载到不同的路径。
 > 这两种代码实现了相同的功能，但在实际开发中推荐使用 express.Router 将不同的路由分离到不同的路由文件中。
 > 更多 express.Router 的用法见[express官方文档](http://www.expressjs.com.cn/4x/api.html#router)
 
 
 - 2. 普及一下模板引擎
+
 > 上面我们介绍一下关于路由的问题,下面来们来普及一下什么是模板引擎
 
-模板引擎（Template Engine）是一个将页面模板和数据结合起来生成 html 的工具。上例中，我们只是返回纯文本给浏览器，现在我们修改代码返回一个 html 页面给浏览器。
-而模板引擎是有很多路,这里我们使用是ejs只是其中的一种,因为它使用起来十分简单,而且与的express集成良好,所我们这里使用是ejs。当然 我们在初始化的时候也安装好了,当然也可以独立安装
+
+模板引擎（Template Engine）是一个将页面模板和数据结合起来生成 html 的工具。上例中，
+我们只是返回纯文本给浏览器，现在我们修改代码返回一个 html 页面给浏览器。
+而模板引擎是有很多路,这里我们使用是ejs只是其中的一种,因为它使用起来十分简单,而且与的express集成良好,所我们这里使用是ejs。
+当然 我们在初始化的时候也安装好了,当然也可以独立安装
 `npm i ejs --save-dev`
