@@ -601,19 +601,19 @@ router.get('/users/:name', function(req, res) {
 通过上面的例子，我们不难看出req包含了请求来的相关信息,res则返回该请求的的响应信息,
 更多请查询[express官方文档](http://www.expressjs.com.cn/4x/api.html#req)下面介绍几处常用的req属性
 
-> 1 req.query:解析后的url中的querystring,如?name=heihei,req.query的值就为{name:'heihei'}
-2 req.params:解析url中的占位符,如/:name,访问的/heihei,req,params的值为{name:'heihei'}
-3 req.body 解析讨请求体(需要相应的模块),如[body-parser](https://www.npmjs.com/package/body-parser),
-请求体为{'name':'heihei'},则req.body为{name:'heihei'}
+> 
+- 1 req.query:解析后的url中的querystring,如?name=heihei,req.query的值就为{name:'heihei'}
+- 2 req.params:解析url中的占位符,如/:name,访问的/heihei,req,params的值为{name:'heihei'}
+- 3 req.body 解析讨请求体(需要相应的模块),如[body-parser](https://www.npmjs.com/package/body-parser),请求体为{'name':'heihei'},则req.body为{name:'heihei'}
 
 
-> 上面只是很简单的路由使用的例子（将所有路由控制函数都放到了 index.js），但在实际开发中通常有几十甚至上百的路由,
-都写在 index.js 既臃肿又不好维护。
-所以通常会在项目目录里面会有一个routes文件夹,里面会存放index.js与users.js
-我们将 / 和 /users/:name 的路由分别放到了 routes/index.js 和 routes/users.js 中，
-每个路由文件通过生成一个 express.Router 实例 router 并导出，通过 app.use 挂载到不同的路径。
-这两种代码实现了相同的功能，但在实际开发中推荐使用 express.Router 将不同的路由分离到不同的路由文件中。
-更多 express.Router 的用法见[express官方文档](http://www.expressjs.com.cn/4x/api.html#router)
+上面只是很简单的路由使用的例子（将所有路由控制函数都放到了 `index.js`），但在实际开发中通常有几十甚至上百的路由,
+都写在` index.js` 既臃肿又不好维护。
+所以通常会在项目目录里面会有一个`routes`文件夹,里面会存放`index.js`与`users.js`
+我们将 `/ `和 `/users/:name `的路由分别放到了` routes/index.js` 和` routes/users.js` 中，
+每个路由文件通过生成一个 `express.Router` 实例` router` 并导出，通过 `app.use `挂载到不同的路径。
+这两种代码实现了相同的功能，但在实际开发中推荐使用 `express.Router` 将不同的路由分离到不同的路由文件中。
+更多 `express.Router` 的用法见[express官方文档](http://www.expressjs.com.cn/4x/api.html#router)
 
 
 - 2. 普及一下模板引擎
