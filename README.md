@@ -391,7 +391,7 @@ app.use(function(err,req,res,next){
 
 我们接下来分析一下bin/www这个文件
 
->
+
 ```
 #!/usr/bin/env node
 
@@ -485,6 +485,8 @@ function onListening() {
 }
 ```
 
+*** 
+
 - 2.1 `#!/usr/bin/env node` 表明是node可执行文件
 - 2.2 引入相应的模块与文件
 
@@ -513,7 +515,9 @@ server.on('listening', onListening);
 ```
 > 成功启动服务后会打印出来
 
->![](http://i1.piimg.com/567571/adb05ec2e62c570d.png)
+
+![](http://i1.piimg.com/567571/adb05ec2e62c570d.png)
+
 
 > 关于bin/www里面文件的内容分析就到这了(能力有限,所以....)
 
@@ -558,6 +562,7 @@ module.exports = router;
 > 这里又到了补充一点关于路由的知识了,各位小伙伴，我们接下来一起看看关于路由的一些知识，我们还是通过routes/index.js中的代码来做分析
 > ps: 关于前面的引入这一点，我就不做多的描述了，通过上面的学习估计也成为了新手上路了吧，来老老司机带路，直接进入高潮
 
+
 ```
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -597,17 +602,18 @@ router.get('/users/:name', function(req, res) {
 更多请查询[express官方文档](http://www.expressjs.com.cn/4x/api.html#req)下面介绍几处常用的req属性
 
 > 1 req.query:解析后的url中的querystring,如?name=heihei,req.query的值就为{name:'heihei'}
-> 2 req.params:解析url中的占位符,如/:name,访问的/heihei,req,params的值为{name:'heihei'}
-> 3 req.body 解析讨请求体(需要相应的模块),如[body-parser](https://www.npmjs.com/package/body-parser),
+2 req.params:解析url中的占位符,如/:name,访问的/heihei,req,params的值为{name:'heihei'}
+3 req.body 解析讨请求体(需要相应的模块),如[body-parser](https://www.npmjs.com/package/body-parser),
 请求体为{'name':'heihei'},则req.body为{name:'heihei'}
 
 
-> 上面只是很简单的路由使用的例子（将所有路由控制函数都放到了 index.js），但在实际开发中通常有几十甚至上百的路由,都写在 index.js 既臃肿又不好维护。
-> 所以通常会在项目目录里面会有一个routes文件夹,里面会存放index.js与users.js
-> 我们将 / 和 /users/:name 的路由分别放到了 routes/index.js 和 routes/users.js 中，
+> 上面只是很简单的路由使用的例子（将所有路由控制函数都放到了 index.js），但在实际开发中通常有几十甚至上百的路由,
+都写在 index.js 既臃肿又不好维护。
+所以通常会在项目目录里面会有一个routes文件夹,里面会存放index.js与users.js
+我们将 / 和 /users/:name 的路由分别放到了 routes/index.js 和 routes/users.js 中，
 每个路由文件通过生成一个 express.Router 实例 router 并导出，通过 app.use 挂载到不同的路径。
-> 这两种代码实现了相同的功能，但在实际开发中推荐使用 express.Router 将不同的路由分离到不同的路由文件中。
-> 更多 express.Router 的用法见[express官方文档](http://www.expressjs.com.cn/4x/api.html#router)
+这两种代码实现了相同的功能，但在实际开发中推荐使用 express.Router 将不同的路由分离到不同的路由文件中。
+更多 express.Router 的用法见[express官方文档](http://www.expressjs.com.cn/4x/api.html#router)
 
 
 - 2. 普及一下模板引擎
@@ -617,6 +623,8 @@ router.get('/users/:name', function(req, res) {
 
 模板引擎（Template Engine）是一个将页面模板和数据结合起来生成 html 的工具。上例中，
 我们只是返回纯文本给浏览器，现在我们修改代码返回一个 html 页面给浏览器。
-而模板引擎是有很多路,这里我们使用是ejs只是其中的一种,因为它使用起来十分简单,而且与的express集成良好,所我们这里使用是ejs。
+而模板引擎是有很多路,这里我们使用是ejs只是其中的一种,因为它使用起来十分简单,而且与的express集成良好,
+所我们这里使用是ejs。
 当然 我们在初始化的时候也安装好了,当然也可以独立安装
+
 `npm i ejs --save-dev`
