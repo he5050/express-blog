@@ -1,9 +1,12 @@
 # Express入门 
-使用node  expres mongoDB搭建多人搏客(新手联系之作)
+
+使用node  expres mongoDB搭建多人搏客(新手练习之作)
+
 ## 开发环境
 - Node  `v6.10.0`
 - Express `v4.14.1`
-- MongoDB 
+- MongoDB `v3.4.2`
+
 ## 1. 安装Express并进行初始化
 express 是 Node.js 上最流行的 Web 开发框架，正如他的名字一样，使用它我们可以快速的开发一个 Web 应用。我们用 express 来搭建我们的博客，打开命令行，输入：
 
@@ -557,7 +560,8 @@ module.exports = router;
 ***
 
 ## 6.路由控制
-- 1.普及一下路由知识
+
+### 6.1.普及一下路由知识
 
 > 这里又到了补充一点关于路由的知识了,各位小伙伴，我们接下来一起看看关于路由的一些知识，我们还是通过routes/index.js中的代码来做分析
 > ps: 关于前面的引入这一点，我就不做多的描述了，通过上面的学习估计也成为了新手上路了吧，来老老司机带路，直接进入高潮
@@ -615,8 +619,9 @@ router.get('/users/:name', function(req, res) {
 这两种代码实现了相同的功能，但在实际开发中推荐使用 `express.Router` 将不同的路由分离到不同的路由文件中。
 更多 `express.Router` 的用法见[express官方文档](http://www.expressjs.com.cn/4x/api.html#router)
 
+***
 
-- 2. 普及一下模板引擎
+### 6.2. 普及一下模板引擎
 
 > 上面我们介绍一下关于路由的问题,下面来们来普及一下什么是模板引擎
 
@@ -628,3 +633,372 @@ router.get('/users/:name', function(req, res) {
 当然 我们在初始化的时候也安装好了,当然也可以独立安装
 
 `npm i ejs --save-dev`
+
+安装我们ejs模板引擎的之后,我们继续回到上面的代码
+
+```
+/* GET home page. */
+router.get('/', function(req, res, next) {
+  res.render('index', { title: 'Express' });
+});
+```
+
+我们对上面的这个代码片段进行进一步的分析,能过`res.render`函数渲染ejs模板,`res.render`第一个参数是模板的名字,
+这里会匹配到`views/index.ejs`(为啥会匹配到`views`下面呢?
+我们在分析`app.js`的时候已经定义了视图的路径了
+`app.set('views',path.join(_dirname,'views'))`没错就是在这里定义了模板路径
+`app.set('view engine','ejs')`在这里定义了我们的模板引擎是ejs
+不懂没关系接着看)
+`res.render`的第二参数是传组模板的数据,这里我们传入`title`,则在ejs模板中可以直接使用title。
+`res.render`的作用就是将模板各数据结合生成的html,同时设置了响应头`Content-type:text/html`告诉浏览器返回的是html,
+不是文本信息,而是按html展示出来。
+
+下面我们上面说了模板的调用,那么我在看一下模板中是怎么使用我们传入进来的值呢?
+
+```
+<h1><%= title %></h1>
+<p>Welcome to <%= title %></p>
+
+```
+上面的代码可以看到,我们在模板使用<%= xxx%>这是什么鬼?,那在这里不得不科普一下ejs常用的标签:
+1. `<% code%>`  运行javascript代码,不输出。如  我传一下`str = 'abc'`  `<% str.toUpperCase()%>` 在模板中把str转成大写
+2. `<%= code%>`  显示转义后的html内容
+3. `<%- code%>` 显示原始HTML内容
+
+>注意：<%= code %> 和 <%- code %> 都可以是 JavaScript 表达式生成的字符串，当变量 code 为普通字符串时，两者没有区别。
+当 code 比如为 <h1>hello</h1> 这种字符串时，<%= code %> 会原样输出 <h1>hello</h1>，
+而 <%- code %> 则会显示 H1 大的 hello 字符串。
+
+别的都不用多解释,关于第一种的用户我在这要多说一下,请看下一个例子:
+
+Data:
+
+```
+names:['小王','小李','小钱']
+```
+Template:
+```
+<ul>
+<% for(var i=0; i<names.length;i++) {%>
+	<li><%= names[i]%></li>
+<%{%>
+</ul>
+```
+Resutl:
+
+```
+<ul>
+<li>小王</li>
+<li>小李</li>
+<li>小钱</li>
+</ul>
+```
+> 看到这里 有学个jsp或是php的同学是不是发现好熟悉啊！
+还是老样子更多内容请查询[官方文档](https://www.npmjs.com/package/ejs#tags)
+
+
+在这里我又得要说一下了,我在实现开发当中,不可能说一种应用就对应一个模板页面,这样我们就是失去了模板的优势了,
+比喻我们导航条与底部信息栏目,通常是在后面的每个页面都有使用到的,那么我们把这些常复用的模板片段组合起使用。
+如我们在`views`下创建`header.ejs`和`footer.ejs`,并修改我们的index.ejs(只是一个demo)
+
+使用include包含复用模板
+`views/header.ejs`代码如下:
+
+```
+
+<html>
+  <head>
+    <title>XXXXX</title>
+    css ...
+    js ....
+  </head>
+  <body>
+```
+
+`views/footer.ejs`代码如下:
+
+```
+js....
+</body>
+</html>
+```
+`views/index.ejs`代码如下:
+
+```
+<%- include('header') %>
+<h1><%= title %></h1>
+<p>Welcome to <%= title %></p>
+<%- include('footer') %>
+```
+我们将原来的 index.ejs 拆成出了 header.ejs 和 footer.ejs,并在 users.ejs 通过 ejs 内置的 include 方法引入,
+从而实现了跟以前一个模板文件相同的功能。
+>拆分模板组件通常有两个好处：
+>> 1. 模板可复用，减少重复代码
+>> 2. 主模板结构清晰
+> 要用 <%- include('header') %> 而不是 <%= include('header') %>
+
+
+***
+
+
+### 6.3. 关于中间件与next
+
+> 我们对 `express` 中路由和模板引擎 ejs 的用法进行了简单了解，但 `express` 的精髓并不在此，在于`中间件`的设计理念。
+
+
+那么问题来了,什么是中间件,我们来回顾一下我在分析`app.js`当中关于404
+
+
+```
+app.use(function(req, res, next) {
+    var err = new Error('Not Found');
+    err.status = 404;
+    next(err);
+});
+```
+`express` 中的中间件（`middleware`）就是用来处理请求的，当一个中间件处理完，可以通过调用 `next()` 传递给下一个中间件，
+如果没有调用 `next()`,则请求不会往下传递。
+这个例子可能看得不是很明白,下面我们重新写一个:
+
+`app.js`
+
+```
+var express = require('express');
+var app = express();
+
+app.use(function(req,res,next){
+	console.log('我是第一个');
+	next();
+);
+app.use(function(req,res,next){
+	console.log('我是第二个');
+	res.status(200).end();
+});
+app.listen(3000);
+```
+
+在访问`127.0.0.1:3000`,在`chrome`中的控制台里可以看到输出了以下结果
+
+> 我是第一个
+> 我是第二个
+
+
+通过app.use加载中间件，在中间件中通赤next将请求传递到下一个中间件,next可接受一个参数接收错误信息,
+如果使用了next(error),则会近观回错误信息而不会继续传到下一个中间件里,我们在对`app.js`进行修改:
+
+```
+var express = require('express');
+var app = express();
+
+app.use(function(req,res,next){
+	console.log('我是第一个');
+	next(new Error('我在第一处发生了错误了!'));
+);
+app.use(function(req,res,next){
+	console.log('我是第二个');
+	res.status(200).end();
+});
+app.listen(3000);
+```
+我们在次访问`127.0.0.1:3000`就会得错误结果了,后台与页面都能看到错误信息
+
+> Error: 我在第一处发生了错误了!
+app.use 有非常灵活的使用方式,还是老样子请查看[官方文档](http://www.expressjs.com.cn/4x/api.html#app.use)
+关于中间件的内容请查看[官方文档](http://www.expressjs.com.cn/guide/using-middleware.html)
+
+上面的例子中,`express`内置了一个默认的错误处理器,假如我们想要手动控制返回错误的内容,则需要加载一个自定义错误处理的中间件,
+我在上面的例子中 手动添加一个错误处理
+```
+app.use(function(err,req,res,next){
+	console.error(err.stack);
+	res.status(500).send('这里发生了错误了！')；
+);
+```
+在一次一访问`127.0.0.1:3000`,这个时候浏览器中会显示这里发生了错误了!
+> 更多内容请查阅[官方文档](http://www.expressjs.com.cn/guide/error-handling.html)
+
+
+***
+### 说了这么多,我们终于要开始进入正题了
+***
+
+## 7.1功能分析以及依赖的安装
+
+搭建一个简单的可以多人注册、登录、发表文章、登出功能的博客。
+
+好我们要正式开始了哦!
+上面对于整个目录结构与主要代码的分析,以及相关的小知识点,我都做了一下简单的介绍了,
+
+下面我们来安装一下我们所需要一些功能模块
+`npm i config-lite connect-flash connect-mongo ejs express express-formidable express-session marked moment mongolass objectid-to-timestamp sha1 winston express-winston --save-dev`
+对应模块的功能:
+1. `express` : web框架
+2. `express-session` : `sesison`中间件
+3. `connect-mongo` : 把`session`存放到`mogogDB`当中
+4. `connect-flash` : 页面通知提示的中间件，基于 `session` 实现
+5. `ejs` : 模板
+6. `express-formidable` : 接收表单及文件的上传中间件
+7. `config-lite` : 读取配置文件
+8. `marked` :  markdown 解析
+9. `moment` : 时间格式化
+10. `mongolass` : mongodb 驱动
+11. `objectid-to-timestamp` : 根据 `ObjectId` 生成时间戳
+12. `sha1` : `sha1` 加密，用于密码加密
+13. `winston` : 日志
+14. `express-winston` : 基于 `winston` 的用于 `express` 的日志中间件
+
+> 不管是小项目还是大项目，将配置与代码分离是一个非常好的做法。我们通常将配置写到一个配置文件里，
+如 `config.js` 或 `config.json` ，并放到项目的根目录下。`config-lite` 模块正是你需要的。
+
+
+#### 7.1.1 `config-lite`的介绍与使用
+ 
+ `config-lite` 是一个轻量的读取配置文件的模块。`config-lite` 会根据环境变量（`NODE_ENV`）的不同从当前执行进程
+ 目录下的` config` 目录加载不同的配置文件。如果不设置` NODE_ENV`，则读取默认的 `default` 配置文件，如果设置了 `NODE_ENV`，
+ 则会合并指定的配置文件和 `default` 配置文件作为配置，`config-lite` 支持` .js、.json、.node、.yml、.yaml` 后缀的文件。
+ 
+ > 如果程序以 NODE_ENV=test node app 启动，则通过 require('config-lite') 会依次降级查找
+  config/test.js、config/test.json、config/test.node、config/test.yml、config/test.yaml 
+ 并合并 default 配置; 
+ 如果程序以 NODE_ENV=production node app 启动，则通过 require('config-lite') 会依次降级查找 config/production.js、
+ config/production.json、config/production.node、config/production.yml、config/production.yaml 
+ 并合并 default 配置。
+ 
+关于这个环境变量的设置我在这里简单的提一下:
+- 环境变量（environment variables）一般是指在操作系统中用来指定操作系统运行环境的一些参数。
+- 在 Mac 和 Linux 的终端直接输入 env，会列出当前的环境变量，如：USER=xxx。简单来讲，环境变量就是传递参数给运行程序的。
+>通过以下命令启动程序，指定当前环境变量 NODE_ENV 的值为 test。
+  >> `NODE_ENV = test node app`
+>那么在 app.js 中可通过 process.env
+>> `console.log(process.env.NODE_ENV) //test`
+
+
+- 另一个常见的例子是使用debug模块: `DEBUG = * node app`
+- Window用户的设置是
+```
+set DEBUG = *
+set NODE_ENV = test
+node app
+//可以使用 cross-evn
+npm i cross-evn -g 
+//使用方式:
+cross-env NODE_ENV = test node app
+``` 
+
+只是点到为止,不要在意这些。我们要开始开工了
+#### 7.1.1 在我们的项目中创建`default.js`
+**config/default.js**
+```
+module.exprots = {
+	port : 3000,
+	session : {
+		secret : 'blog',
+		key : 'blog',
+		magAge : 2592000000
+	},
+	mongodb : 'mongodb://localhost:27017/blog'
+}
+```
+配置的注释如下
+1. `port` : 程序启动要监听的端口号
+2. `session` : `express-session` 的配置信息，后面介绍
+3. `mongodb` : `mongodb` 的地址，`blog` 为 `db` 名
+
+*关于mongodb的使用我这里不用多的介绍了*
+
+#### 7.1.2 先看我们主要功能与路由
+> 是一个入门之作 没有使用ajax
+1. 注册
+ - 1.1 注册页面: `GET /singup`
+ - 1.2 注册(操作): `POST /singup`
+2. 登录
+ - 2.1 登录页面: `GET /singin`
+ - 2.2 登录检查: `POST /singin`
+3. 登出
+ - 3.1 用户登出:  `GET /singout`
+4. 查看文章
+ - 4.1 主页:  `GET /posts`
+ - 4.2 个人主页: `GET /posts?author=xxxx`
+ - 4.3 查看一篇文章(包含留言): `GET /posts/:postId`
+5. 发表文章
+ - 5.1 发表文章页面: `GET /posts/create`
+ - 5.2 发表文章(操作): `POST /posts`
+6. 编辑文章
+ - 6.1 编辑文章页面: `GET /posts/:postId/edit`
+ - 6.2 修改文章(操作): `POSt /posts/:postId/edit`
+7. 删除文章
+ - 7.1 删除具体的文章: `GET /posts/:postId/remove`
+8.留言
+ - 8.1 创建留言: `POST /posts/:postId/comment`
+ - 8.2 删除留言: `GET /posts/:postId/comment/:commentId/remove`
+ 
+ > 在设计API的时候最好是遵循restful风格
+ 
+ `GET /posts/:postId/remove` 
+ 
+ >修改成restful
+ 
+ `DELETE /post/:postId`
+
+>更多内容请自行查询相关文档
+
+
+#### 7.1.2 session与cookie
+
+>由于 HTTP 协议是无状态的协议，所以服务端需要记录用户的状态时，
+就需要用某种机制来识别具体的用户，这个机制就是会话（Session）。
+
+
+**cookie 与 session 的区别**
+- cookie 存储在浏览器（有大小限制），session 存储在服务端（没有大小限制
+- 通常 session 的实现是基于 cookie 的，即 session id 存储于 cookie 中
+- 我们通过引入 `express-session `中间件实现对会话的支持`app.use(session(options))`
+
+`session` 中间件会在 `req` 上添加 `session` 对象，即 `req.session` 初始值为 `{}`，当我们登录后设置 `req.session.user = 用户信息`，
+返回浏览器的头信息中会带上 `set-cookie` 将 `session id `写到浏览器 `cookie` 中，那么该用户下次请求时，
+通过带上来的 `cookie` 中的 `session id `我们就可以查找到该用户，并将用户信息保存到 `req.session.user`。
+
+#### 7.1.3 页面通知 flash组件
+
+当我们操作`成功`时需要显示一个成功的通知，如`登录成功`跳转到主页时，需要显示一个 `登陆成功 `的通知；
+当我们操作`失败`时需要显示一个失败的通知，如`注册`时用户名被占用了，需要显示一个 `用户名已占用` 的通知。
+通知只显示`一次`，刷新后消失，我们可以通过 `connect-flash `中间件实现这个功能。
+
+`connect-flash` 是基于` session` 实现的，它的原理很简单：设置初始值 `req.session.flash={}`，
+通过 `req.flash(name, value)` 设置这个对象下的字段和值，通过 `req.flash(name) `获取这个对象下的值，同时删除这个字段。
+
+`express-session`、`connect-mongo` 和` connect-flash` 的区别与联系
+
+- `express-session`: 会话（`session`）支持中间件
+- `connect-mongo`: 将 `session` 存储于 `mongodb`，需结合 `express-session` 使用，我们也可以将 `session` 存储于 `redis`，如` connect-redis`
+- `connect-flash`: 基于 `session` 实现的用于通知功能的中间件，需结合 `express-session `使用
+
+#### 7.1.3 权限控制
+基本现在每一个网站都会这个权限控制,我们没有登录的话只能浏览,登陆后才能发帖或写文章,即使登录了你也不能修改或删除其他人的文章，这就是权限控制。
+我们也要给我们的项目添加权限控制，如何实现页面的权限控制呢？我们可以把用户状态的检查封装成一个中间件,在每个需要权限控制的路由加载该中间件,即可实现页面的权限控制。
+在 根目录下新建 middlewares 文件夹，在该目录下新建 check.js
+
+```
+/*用于权限控制*/
+module.exports = {
+	checkLogin : function chekLogin(req,res,next){
+		if(!req.session.user){//检查session是否存在
+			req.flash('error','未登录');//输出提示以为信息
+			return res.redirect('/signin');//跳转到登录页面
+		}
+		next();
+	},
+	checkNotLogin : function checkNotLogin(req,res,next){
+		if(req.session.user){
+			req.flash('error','已登录');
+			return res.redirect('back');//返回之前的页面
+		}
+	},
+}
+
+```
+
+1. `checkLogin`: 当用户信息（`req.session.user`）不存在，即认为用户没有登录，则跳转到登录页，同时显示` 未登录 `的通知，用于需要用户登录才能操作的页面及接口
+2. `checkNotLogin`: 当用户信息（`req.session.user`）存在，即认为用户已经登录，则跳转到之前的页面，同时显示` 已登录 `的通知，如登录、注册页面及登录、注册的接口
+---
+今天就写到这了2017-03-06
