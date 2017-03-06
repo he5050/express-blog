@@ -1000,5 +1000,130 @@ module.exports = {
 
 1. `checkLogin`: 当用户信息（`req.session.user`）不存在，即认为用户没有登录，则跳转到登录页，同时显示` 未登录 `的通知，用于需要用户登录才能操作的页面及接口
 2. `checkNotLogin`: 当用户信息（`req.session.user`）存在，即认为用户已经登录，则跳转到之前的页面，同时显示` 已登录 `的通知，如登录、注册页面及登录、注册的接口
+
+上面的准备工作弄完了,我们可以更具我们上面的需求来确定，我们所需要的路由
+
+**routes/index.js**
+
+```
+module.exports = function (app) {
+  app.get('/', function (req, res) {
+    res.redirect('/posts');
+  });
+  app.use('/signup', require('./signup'));
+  app.use('/signin', require('./signin'));
+  app.use('/signout', require('./signout'));
+  app.use('/posts', require('./posts'));
+
+  // 404 page
+  app.use(function (req, res) {
+    if (!res.headersSent) {
+      res.status(404).render('404');
+    }
+  });
+};
+```
+**routes/posts.js**
+
+```
+var express = require('express');
+var router = express.Router();
+
+var checkLogin = require('../middlewares/check').checkLogin;//权限控制
+//GET/ posts 所有用户或是特定用户的文章页
+//如: GET /posts ? author = xxx
+router.get('/',function(req,res,next){
+	res.send(req.flash());
+});
+// POST /posts 发表文章
+router.post('/',checkLogin,function(req,res,next){
+	res.send(req.flash());
+});
+// GET /posts/create 发表文章页
+router.get('/"postId',function(req,res,next){
+	res.sned(req.flash());
+});
+//GET /posts/:postId 单独一篇的文章页
+router.get('/:postId',checkLogin,function(req,res,next){
+	res.send(req.flash());
+});
+//GET /posts/:postId/edit 更新文章页
+router.get('/:postId/edit',checkLogin,function(req,res,next){
+	res.send(req.flash());
+});
+//GET /posts/:postId/remove 删除一篇文章
+router.get('/:postId/remove',checkLogin,function(req,res,next){
+	res.send(req.flash());
+});
+//POST /posts/:postId/comment 创建一条留言
+router.post('/:postId/comment',checkLogin,function(req,res,next){
+	res.send(req.flash());
+});
+//GET /posts/:postId/comment/:commentId/remove 删除一条留言
+router.get('/:postId/comment/:commentId/remove',checkLogin,function(req,res,next){
+	res.send(req.flash());
+});
+module.exports = router;
+```
+**routes/signin.js**
+
+```
+var express = require('express');
+var router = express.Router();
+
+var checkNotLogin = require('../middlewares/check').checkNotLogin;
+
+// GET /signin 登录页
+router.get('/', checkNotLogin, function(req, res, next) {
+  res.send(req.flash());
+});
+
+// POST /signin 用户登录
+router.post('/', checkNotLogin, function(req, res, next) {
+  res.send(req.flash());
+});
+
+module.exports = router;
+```
+
+**routes/signup.js**
+
+```
+var express = require('express');
+var router = express.Router();
+
+var checkNotLogin = require('../middlewares/check').checkNotLogin;
+
+// GET /signup 注册页
+router.get('/', checkNotLogin, function(req, res, next) {
+  res.send(req.flash());
+});
+
+// POST /signup 用户注册
+router.post('/', checkNotLogin, function(req, res, next) {
+  res.send(req.flash());
+});
+
+module.exports = router;
+```
+
+**routes/signout.js**
+
+```
+var express = require('express');
+var router = express.Router();
+
+var checkLogin = require('../middlewares/check').checkLogin;
+
+// GET /signout 登出
+router.get('/', checkLogin, function(req, res, next) {
+  res.send(req.flash());
+});
+
+module.exports = router;
+```
+
+
 ---
+
 今天就写到这了2017-03-06

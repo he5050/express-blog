@@ -4,11 +4,11 @@ var router = express.Router();
 var checkLogin = require('../middlewares/check').checkLogin;//权限控制
 //GET/ posts 所有用户或是特定用户的文章页
 //如: GET /posts ? author = xxx
-router.get('./',function(req,res,next){
+router.get('/',function(req,res,next){
 	res.send(req.flash());
 });
 // POST /posts 发表文章
-router.post('./',checkLogin,function(req,res,next){
+router.post('/',checkLogin,function(req,res,next){
 	res.send(req.flash());
 });
 // GET /posts/create 发表文章页
