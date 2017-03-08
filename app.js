@@ -52,7 +52,7 @@ app.use(session({
 app.use(flash());
 //处理表单及文件上传的中间件
 app.use(require('express-formidable')({
-	uploadDir : path.join(__dirname,'public/imgages'),//上传文件目录
+	uploadDir : path.join(__dirname,'public/images'),//上传文件目录
 	keepExtensions : true //是否保留后缀
 }));
 //设置模板的全局常量从package读取

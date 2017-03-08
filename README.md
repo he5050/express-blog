@@ -982,6 +982,7 @@ module.exprots = {
 /*用于权限控制*/
 module.exports = {
 	checkLogin : function chekLogin(req,res,next){
+	console.log('检查登录!')
 		if(!req.session.user){//检查session是否存在
 			req.flash('error','未登录');//输出提示以为信息
 			return res.redirect('/signin');//跳转到登录页面
@@ -989,10 +990,12 @@ module.exports = {
 		next();
 	},
 	checkNotLogin : function checkNotLogin(req,res,next){
+	 console.log('检查是否登录!');
 		if(req.session.user){
 			req.flash('error','已登录');
 			return res.redirect('back');//返回之前的页面
 		}
+		next();
 	},
 }
 
@@ -1008,8 +1011,10 @@ module.exports = {
 ```
 module.exports = function (app) {
   app.get('/', function (req, res) {
+  //进行重定项
     res.redirect('/posts');
   });
+  //使用中间件
   app.use('/signup', require('./signup'));
   app.use('/signin', require('./signin'));
   app.use('/signout', require('./signout'));
@@ -1033,35 +1038,35 @@ var checkLogin = require('../middlewares/check').checkLogin;//权限控制
 //GET/ posts 所有用户或是特定用户的文章页
 //如: GET /posts ? author = xxx
 router.get('/',function(req,res,next){
-	res.send(req.flash());
+	
 });
 // POST /posts 发表文章
 router.post('/',checkLogin,function(req,res,next){
-	res.send(req.flash());
+	
 });
 // GET /posts/create 发表文章页
 router.get('/"postId',function(req,res,next){
-	res.sned(req.flash());
+	
 });
 //GET /posts/:postId 单独一篇的文章页
 router.get('/:postId',checkLogin,function(req,res,next){
-	res.send(req.flash());
+	
 });
 //GET /posts/:postId/edit 更新文章页
 router.get('/:postId/edit',checkLogin,function(req,res,next){
-	res.send(req.flash());
+	
 });
 //GET /posts/:postId/remove 删除一篇文章
 router.get('/:postId/remove',checkLogin,function(req,res,next){
-	res.send(req.flash());
+	
 });
 //POST /posts/:postId/comment 创建一条留言
 router.post('/:postId/comment',checkLogin,function(req,res,next){
-	res.send(req.flash());
+	
 });
 //GET /posts/:postId/comment/:commentId/remove 删除一条留言
 router.get('/:postId/comment/:commentId/remove',checkLogin,function(req,res,next){
-	res.send(req.flash());
+	
 });
 module.exports = router;
 ```
@@ -1075,12 +1080,12 @@ var checkNotLogin = require('../middlewares/check').checkNotLogin;
 
 // GET /signin 登录页
 router.get('/', checkNotLogin, function(req, res, next) {
-  res.send(req.flash());
+  
 });
 
 // POST /signin 用户登录
 router.post('/', checkNotLogin, function(req, res, next) {
-  res.send(req.flash());
+  
 });
 
 module.exports = router;
@@ -1096,12 +1101,12 @@ var checkNotLogin = require('../middlewares/check').checkNotLogin;
 
 // GET /signup 注册页
 router.get('/', checkNotLogin, function(req, res, next) {
-  res.send(req.flash());
+  
 });
 
 // POST /signup 用户注册
 router.post('/', checkNotLogin, function(req, res, next) {
-  res.send(req.flash());
+  
 });
 
 module.exports = router;
@@ -1117,7 +1122,7 @@ var checkLogin = require('../middlewares/check').checkLogin;
 
 // GET /signout 登出
 router.get('/', checkLogin, function(req, res, next) {
-  res.send(req.flash());
+  
 });
 
 module.exports = router;
@@ -1127,3 +1132,179 @@ module.exports = router;
 ---
 
 今天就写到这了2017-03-06
+
+***
+
+#### 7.1.4 注册页面与注册功能
+
+> `ps:` 昨天我们完成了路由功能
+
+
+今天主要完成了基本页面的布局
+
+1. 注册页面
+
+![](http://p1.bpimg.com/567571/9446924da0b53601.png)
+
+
+2. 注册功能
+ - 2.1 我们要使用`mongoDB`,在这里请自行查阅`mongoDB`相关]使用手册](http://www.runoob.com/mongodb/mongodb-tutorial.html)
+ - 2.2 假设我们的`mongoDB`都安装好,并成功运行了。我们现在需要创建一个表(其实是没有表,我们假装按mysql的方式)
+   在根目录下面新一个`lib`文件夹,用于存放我们要使用相关模型`mongo.js`,具体如下,用于创建用户
+ ```
+ 
+var config = require('config-lite');
+var Mongolass = require('mongolass');
+var mongolass = new Mongolass();
+mongolass.connect(config.mongodb);
+
+//用户模型
+exports.User = mongolass.model('User',{
+	name : {type : 'string'},
+	password : {type : 'string'},
+	avatar : {type : 'string'},
+	gender : {type : 'string',enum : ['m','f','x']},
+	bio : {type : 'string'}
+});
+//根据用户名找到用户，用户名全局唯一
+exports.User.index({name : 1},{unique : true}).exec();
+
+//根据用户名找到用户，用户名全局唯一
+exports.User.index({name : 1},{unique : true}).exec();
+
+ ```
+ 
+ > 解释一下上我们这段代码的意思,我们定义了用户表的 `schema`,生成并导出了 `User` 这个 `model`,
+ 同时设置了 `name` 的唯一索引，保证用户名是不重复的。
+ Mongolass 相当于我们用的mysql的连接
+ 
+- 2.3 用户注册页面我们有了,数据表也有了,剩下的工作就是写入到数据库当中了
+ - 在根目录下,我们创建一个`models`文件夹,在里创建一个`usrs.js`,用于执行创建用户
+
+```
+
+var User = require('../lib/mongo').User;
+
+module.exports = {
+	//注册用户
+	create : function create(user){
+		return User.create(user).exec();
+	} 
+};
+
+```
+
+ - 在完成了以上操作之后,我们在注册的时候一般都会用户输入的信息进行验证。我们打开`routers/signup.js`,完成注册验证功能 。
+ 
+ ***
+
+	var fs = require('fs');
+	var path1 = require('path');
+	var sha1 = require('sha1');
+
+	var express = require('express');
+	var router = express.Router();
+
+	var UserModel = require('../models/users');
+	var checkNotLogin = require('../middlewares/check').checkNotLogin;
+	
+	// GET /signup 注册页
+	router.get('/',checkNotLogin ,function(req, res, next) {
+		console.log('进入注册页面');
+		//res.send('进入注册页面')
+	  res.render('signup');
+	});
+	// POST /signup 用户注册
+	router.post('/', checkNotLogin, function(req, res, next) {
+		console.log('正在进行注册');
+		console.log('提取字段');
+		var name = req.fields.name;
+		var gender = req.fields.gender;
+		var bio = req.fields.bio;
+		//console.log(path1.sep);
+		var avatar = req.files.avatar.path.split(path1.sep).pop();
+		//var avatar = req.files.avatar.path;
+		//console.log(avatar);
+		//return false;
+		//'foo\\bar\\baz'.split(path.sep) 得到 ['foo', 'bar', 'baz'] 在使用pop方法得到最后一个
+		var password = req.fields.password;
+		var repassword = req.fields.repassword;
+		console.log('校验字段');
+		//验证
+		try{
+			if(!(name.length >= 1 && name.length <=10)){
+				throw new Error('用户名必须限制在1-10个字符');
+			}
+			if(['m','f','x'].indexOf(gender) === -1){
+				throw new Error('性别只能是 男、女、保密');
+			}
+			if(!(bio.length >=1 && bio.length <= 30)){
+				throw new Error('个人简介只能限制在1-30个字符')
+			}
+			if(!req.files.avatar.name){
+				throw new Error('请上头像');
+			}
+			if(password.length <=6){
+				throw new Error('密码至少6个字符');
+			}
+			if(password !== repassword){
+				throw new Error('两次输入密码不一致');
+			}
+		}catch(e){
+			console.log('校验字段失败');
+			//注册失败
+			fs.unlink(req.files.avatar.path);//删除已上传的头像
+			req.flash('error',e.message);//显示错误信息
+			return res.redirect('./signup');//跳转到注册页面
+		}
+		
+		//验证通过
+		//对密码进行加密操作
+		password = sha1(password);
+		
+		//组建用户信息
+		var user = {
+			name : name,
+			password : password,
+			gender : gender,
+			bio : bio,
+			avatar : avatar
+		};
+		//把用户信息写入数据库
+		UserModel.create(user)
+			.then(function(result){
+				console.log('成功写入数据库');
+				//返回user 写入mongodb后的值,包含 _id
+				user = result.ops[0];
+				//把用户信息写入到seesion当中,不过要先删除密码才行
+				delete user.password;
+				req.session.user = user;
+				//写入到flash 通知信息
+				req.flash('success','恭喜您注册成功');
+				res.redirect('/posts');//进入主页
+			})
+			.catch(function(e){
+				//写入数据库失败
+				fs.unlink(req.files.avatar.path);
+				//判断是否是应为用户名重复
+				if(e.message.match('E11000 duplicate key')){
+					req.flash('error','用户名不可用');
+					return res.redirect('./signup');
+				}
+				next(e);
+			});
+	  //res.send(req.flash());
+	});
+	module.exports = router;
+	
+	
+	
+	
+ 
+ ***
+ 我们就注册成功了
+ ***
+ ![](http://i1.piimg.com/567571/25287a288c8461ba.png)
+ 
+***
+2017-03-08,今天有别的事忙,没有继续更新

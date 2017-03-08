@@ -8,9 +8,11 @@ module.exports = {
 		next();
 	},
 	checkNotLogin : function checkNotLogin(req,res,next){
+		console.log('检查用户是否已经登录!');
 		if(req.session.user){
 			req.flash('error','已登录');
 			return res.redirect('back');//返回之前的页面
 		}
+		next();
 	},
 }
