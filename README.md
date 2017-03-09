@@ -1151,7 +1151,7 @@ module.exports = router;
 
 
 2. 注册功能
- - 2.1 我们要使用`mongoDB`,在这里请自行查阅`mongoDB`相关]使用手册](http://www.runoob.com/mongodb/mongodb-tutorial.html)
+ - 2.1 我们要使用`mongoDB`,在这里请自行查阅`mongoDB`相关[使用手册](http://www.runoob.com/mongodb/mongodb-tutorial.html)
  - 2.2 假设我们的`mongoDB`都安装好,并成功运行了。我们现在需要创建一个表(其实是没有表,我们假装按mysql的方式)
    在根目录下面新一个`lib`文件夹,用于存放我们要使用相关模型`mongo.js`,具体如下,用于创建用户
  ```
@@ -1478,6 +1478,7 @@ module.exports = {
 		});
 		
 效果如下:
+
 
 ![](http://i1.piimg.com/567571/eaef380ff1d2e82b.png)
 
@@ -1928,4 +1929,20 @@ module.exports = {
 
 ***
 
-#### 8 完成404与相关错误处理
+## 8. 完成404与相关错误处理
+
+当我们访问一个不存在地址,如`http://127.0.0.1:3000/postssss`,页面会提示找不到,会报错。
+为了很好的解决404的页面
+
+在`router/index.js`里面添加一个404页面
+
+
+		
+		// 404 page
+		app.use(function (req, res) {
+		  if (!res.headersSent) {
+		    res.status(404).render('404');
+		  }
+		});
+
+使用的腾讯公益的是`404`
