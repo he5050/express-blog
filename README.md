@@ -1353,9 +1353,10 @@ module.exports = {
 
 > 现在我们的登录页面是OK的
 
+
 3. 下面我们要进行登录操作,也就是登录验证
 
- - 3.1 在进行登录验证的时候,我们在在`user`模型中增加一个获取用户信息的方法
+ - 3.1. 在进行登录验证的时候,我们在在`user`模型中增加一个获取用户信息的方法
  
  打开`models/users.js`,增加一个`getUserByName`的方法
  ```
@@ -1376,7 +1377,7 @@ module.exports = {
 	  }
 	};
  ```
- -  3.2 上面我们使用一个自定义的`addCreatedAt` 自定义的插件(通过`seesion`当中的`_id`,生成时间戳)
+ -  3.2. 上面我们使用一个自定义的`addCreatedAt` 自定义的插件(通过`seesion`当中的`_id`,生成时间戳)
  
 打开`lib/mongo.js`添加我们自定义的插件
 
@@ -1400,7 +1401,7 @@ module.exports = {
 		  }
 		});
 ```
- - 3.3 下面我们就开始进行验证,打开`routes/signin.js`,在下面对`router.post`方法进行修改
+ - 3.3. 下面我们就开始进行验证,打开`routes/signin.js`,在下面对`router.post`方法进行修改
  
 		 router.post('/', checkNotLogin, function(req, res, next) {
 			console.log('正在登录当中....');
@@ -1434,7 +1435,497 @@ module.exports = {
 ![](http://i1.piimg.com/567571/0db442fde20773fc.png)
 
 > 这里面基本的权限控制完成了,回头看一下`注册`,`登录`,`登出`这些功能是否OK
+
+
 下面就开始我们文章操作模块
 
 ***
 
+#### 7.1.5 文章模块
+
+先设置一下文章的表,简单点我们这里只设置几个内容,`id`,`标题`,`内容`,`点击量`,具体操作 如下:
+
+打开`lib/mongo.js`
+
+		exports.Post = mongolass.model('Post', {
+		  author: { type: Mongolass.Types.ObjectId },
+		  title: { type: 'string' },
+		  content: { type: 'string' },
+		  pv: { type: 'number' }
+		});
+		// 按创建时间降序查看用户的文章列表
+		exports.Post.index({ author: 1, _id: -1 }).exec();
+
+文章模型弄好之后,下面就开始操作了
+
+- 1.1. 先发表文章 先把文章发表的页面`views/create.ejs`创建好。(具体代码请自行查看)
+- 1.2. 创建文章发表的模型创建`models/posts.js`。
+
+	var Post = require('../lib/mongo').Post;
+		
+		module.exports = {
+			//发表一篇文章
+			create : function create(post){
+				return Post.create(post).exec();
+			}
+		};
+
+- 1.3. 修改`routes/posts.js`,在文件前面引入`PostModel`,先把发表文章的页面做出来
+
+		// POST /posts 发表文章
+		router.post('/create',checkLogin,function(req,res,next){
+			res.render('create');
+		});
+		
+效果如下:
+
+![](http://i1.piimg.com/567571/eaef380ff1d2e82b.png)
+
+- 1.4. 可以显示出发表文章页面之后,那么我们开始发表了哦
+
+打开`routes/posts.js`,进行如下修改
+
+		// POST /posts 发表文章
+		router.post('/',checkLogin,function(req,res,next){
+			//接收参数
+			var author = req.session.user._id;
+			var title = req.fields.title;
+			var content = req.fields.content;
+			
+			//验证参数
+			try{
+				if(!title.length){
+					throw new Error('请填写标题!');
+				}
+				if(!content.length){
+					throw new Error('请填写内容');
+				}
+			}catch(e){
+				req.flash('error',e.message);
+				return res.redirect('back');
+			}
+			
+			//组装数据
+			var post = {
+				author : author,
+				title : title,
+				content : content,
+				pv : 0
+			};
+			PostModel.create(post)
+			 .then(function(result){
+			 	//返回 _id值
+			 	post = result.ops[0];
+			 	req.flash('success','文章发表成功!');
+			 	console.log('文章发表成功,即将跳转到主页!');
+			 	res.redirect('/posts');
+			 })
+			 .catch(next);
+		});
+
+发表成功之后的页面如下:
+
+![](http://p1.bpimg.com/567571/ac6d3a9e6f07a18b.png)
+
+- 1.5. 文章发表成功后,跳转到主页了,刚刚我们也看见了主页上面什么都没有,接下我们要显示内容
+
+ 打开`models/posts.js`,用于实现主页与文章详情页
+ 
+	
+		
+		
+		//引拉markdown解析,所有文章就可以使有markdwon语法
+		var marked = require('marked');
+		
+		var Post = require('../lib/mongo').Post;
+		
+		//定义插件与前面 登录验证的模式一下,用于把markdown转换成html
+		//补充下 这种插件的写法有afterXXX,beforeXXX,表示查询后执行,与查询前执行
+		Post.plugin('contentToHtml',{
+			afterFind: function (posts) {
+		    return posts.map(function (post) {
+		      post.content = marked(post.content);
+		      return post;
+		    });
+		  },
+		  afterFindOne: function (post) {
+		    if (post) {
+		      post.content = marked(post.content);
+		    }
+		    return post;
+		  }
+		});
+		module.exports = {
+			//发表一篇文章
+			create : function create(post){
+				return Post.create(post).exec();
+			},
+			//通过文章的id号获取文章的详情
+			getPostById : function getPostById(postId){
+				return Post
+					.findOne({_id:postId})
+					.populate({path:'author',model:'User'})
+					.addCreatedAt()
+					.contentToHtml()
+					.exec();
+			},
+			//按创建时间降序获取所有用户文章或者某个特定用户的所有文章
+			getPosts: function getPosts(author){
+				console.log('正在查询当前作者的文章');
+				var query = {};
+				if(author){
+					query.author = author;
+				}
+				return Post
+					  .find(query)
+			      .populate({ path: 'author', model: 'User' })
+			    	.sort({ _id: -1 })
+				    .addCreatedAt()
+				    .contentToHtml()
+				    .exec();
+			},
+			//每被浏览一次增加一次pv
+			incPv : function incPv(postId){
+				return Post
+					.update({ _id : postId},{$inc : {pv:1}})
+					.exec();
+			}
+		};
+
+  打开`routes/posts.js`,修改发表文章与显示文章的路由
+
+
+		router.post('/',checkLogin,function(req,res,next){
+			console.log('正在发表文章');
+			//接收参数
+			var author = req.session.user._id;
+			var title = req.fields.title;
+			var content = req.fields.content;
+			
+			//验证参数
+			try{
+				if(!title.length){
+					throw new Error('请填写标题!');
+				}
+				if(!content.length){
+					throw new Error('请填写内容');
+				}
+			}catch(e){
+				req.flash('error',e.message);
+				return res.redirect('back');
+			}
+			
+			//组装数据
+			var post = {
+				author : author,
+				title : title,
+				content : content,
+				pv : 0
+			};
+			PostModel.create(post)
+			 .then(function(result){
+			 	//返回 _id值
+			 	post = result.ops[0];
+			 	console.log(post);
+			 	req.flash('success','文章发表成功!');
+			 	console.log('文章发表成功,即将跳转到主页!');
+			 	res.redirect('/posts/'+post._id);
+			 })
+			 .catch(next);
+		});
+		// GET /posts/:postId 单独一篇的文章页
+		router.get('/:postId', function(req, res, next) {
+			console.log('正在进入详细页面');
+		  var postId = req.params.postId;
+		
+		  Promise.all([
+		    PostModel.getPostById(postId),// 获取文章信息
+		    PostModel.incPv(postId)// pv 加 1
+		  ])
+		  .then(function (result) {
+		    var post = result[0];
+		    if (!post) {
+		      throw new Error('该文章不存在');
+		    }
+		
+		    res.render('post', {
+		      post: post
+		    });
+		  })
+		  .catch(next);
+		});
+
+
+下面我们来看一下，效果吧!
+
+发表文章:
+
+![](http://p1.bpimg.com/567571/db9bb358231b4ac8.png)
+
+查看文章列表:
+
+![](http://i1.piimg.com/567571/0a94caceb0fc8dea.png)
+
+查看文章详细:
+
+![](http://p1.bqimg.com/567571/3b318a7c5381edd5.png)
+
+
+>  发表文章,显示文章列表,显示文章详情,都好了,下面我们来完成编辑与删除
+
+
+***
+
+
+-  1.6. 我们来实现文章的编辑与删除功能
+
+
+打开`models/posts.js`,增加三个方法`updatePostById`,`delPostById`,`getRawPostById`
+
+		//获取要更新 的文章 特别注意,我们获取是原生的哦,不是markdown转之后的文章
+			getRawPostById : function getRawPostById(postId){
+				return Post
+					.findOne({_id :postId})
+					.populate({path: 'author',model:'User'})
+					.exec();
+			},
+			//更新文章
+			updatePostById : function updatePostById(postId,author,data){
+				return Post
+					.update({author:author,_id:postId},{$set:data})
+					.exec();
+			},
+			//删除文章
+			delPostById: function delPostById(postId,author){
+				return Post
+					.remove({author:author,_id:postId})
+					.exec();
+			}
+
+方法有了,我在路由里面实现功能,打开`routes/posts.js`
+
+
+		// GET /posts/:postId 文章详情页
+		router.get('/:postId', function(req, res, next) {
+			console.log('正在进入详细页面');
+		  var postId = req.params.postId;
+		
+		  Promise.all([
+		    PostModel.getPostById(postId),// 获取文章信息
+		    PostModel.incPv(postId)// pv 加 1
+		  ])
+		  .then(function (result) {
+		    var post = result[0];
+		    if (!post) {
+		      throw new Error('该文章不存在');
+		    }
+		
+		    res.render('post', {
+		      post: post
+		    });
+		  })
+		  .catch(next);
+		});
+		// GET /posts/:postId/edit 获取原始文章
+		router.get('/:postId/edit', checkLogin, function(req, res, next) {
+		  var postId = req.params.postId;
+		  var author = req.session.user._id;
+		
+		  PostModel.getRawPostById(postId)
+		    .then(function (post) {
+		      if (!post) {
+		        throw new Error('该文章不存在');
+		      }
+		      if (author.toString() !== post.author._id.toString()) {
+		        throw new Error('权限不足');
+		      }
+		      res.render('edit', {
+		        post: post
+		      });
+		    })
+		    .catch(next);
+		});
+		
+		// POST /posts/:postId/edit 更新文章
+		router.post('/:postId/edit', checkLogin, function(req, res, next) {
+		  var postId = req.params.postId;
+		  var author = req.session.user._id;
+		  var title = req.fields.title;
+		  var content = req.fields.content;
+		
+		  PostModel.updatePostById(postId, author, { title: title, content: content })
+		    .then(function () {
+		      req.flash('success', '编辑文章成功');
+		      // 编辑成功后跳转到上一页
+		      res.redirect(`/posts/`+postId);
+		    })
+		    .catch(next);
+		});
+		// GET /posts/:postId/remove 删除文章
+		router.get('/:postId/remove', checkLogin, function(req, res, next) {
+		  var postId = req.params.postId;
+		  var author = req.session.user._id;
+		
+		  PostModel.delPostById(postId, author)
+		    .then(function () {
+		      req.flash('success', '删除文章成功');
+		      // 删除成功后跳转到主页
+		      res.redirect('/posts');
+		    })
+		    .catch(next);
+		});
+		
+
+到这,我们基本的功能都实现了,还一个`评论留言`功能
+
+-  1.7. 我们来实现文章留言的`发表`与`删除`功能
+
+在实现这些功能的时候,我们需要创建相关的数据表与模型
+
+-  打开`lib/monog.js`,创建对应的数据表
+
+		
+		//留言表
+		exports.Comment = mongolass.model('Comment', {
+		  author: { type: Mongolass.Types.ObjectId },
+		  content: { type: 'string' },
+		  postId: { type: Mongolass.Types.ObjectId }
+		});
+		// 通过文章 id 获取该文章下所有留言，按留言创建时间升序
+		exports.Comment.index({ postId: 1, _id: 1 }).exec();
+		// 通过用户 id 和留言 id 删除一个留言
+		exports.Comment.index({ author: 1, _id: 1 }).exec();
+
+-  我们创建`models/comments.js`,里面三个方法,分别是创建、删除、获取
+
+
+		var marked = require('marked');
+		var Comment = require('../lib/mongo').Comment;
+		
+		// 将 comment 的 content 从 markdown 转换成 html
+		Comment.plugin('contentToHtml', {
+		  afterFind: function (comments) {
+		    return comments.map(function (comment) {
+		      comment.content = marked(comment.content);
+		      return comment;
+		    });
+		  }
+		});
+		
+		module.exports = {
+		  // 创建留言
+		  create: function create(comment) {
+		    return Comment.create(comment).exec();
+		  },
+		
+		  // 通过用户 id 和留言 id 删除留言
+		  delCommentById: function delCommentById(commentId, author) {
+		    return Comment.remove({ author: author, _id: commentId }).exec();
+		  },
+		
+		  // 通过文章 id 删除该文章下所有留言
+		  delCommentsByPostId: function delCommentsByPostId(postId) {
+		    return Comment.remove({ postId: postId }).exec();
+		  },
+		
+		  // 通过文章 id 获取该文章下所有留言，按留言创建时间升序
+		  getComments: function getComments(postId) {
+		    return Comment
+		      .find({ postId: postId })
+		      .populate({ path: 'author', model: 'User' })
+		      .sort({ _id: 1 })
+		      .addCreatedAt()
+		      .contentToHtml()
+		      .exec();
+		  },
+		
+		  // 通过文章 id 获取该文章下留言数
+		  getCommentsCount: function getCommentsCount(postId) {
+		    return Comment.count({ postId: postId }).exec();
+		  }
+		};
+		
+
+-  打开`routes/posts.js`,创建对应的数据表
+
+		
+		// POST /posts/:postId/comment 发表留言
+		router.post('/:postId/comment', checkLogin, function(req, res, next) {
+		  var author = req.session.user._id;
+		  var postId = req.params.postId;
+		  var content = req.fields.content;
+		  var comment = {
+		    author: author,
+		    postId: postId,
+		    content: content
+		  };
+		
+		  CommentModel.create(comment)
+		    .then(function () {
+		      req.flash('success', '留言成功');
+		      // 留言成功后跳转到上一页
+		      res.redirect('back');
+		    })
+		    .catch(next);
+		});
+		
+		// GET /posts/:postId/comment/:commentId/remove 删除留言
+		router.get('/:postId/comment/:commentId/remove', checkLogin, function(req, res, next) {
+		  var commentId = req.params.commentId;
+		  var author = req.session.user._id;
+		
+		  CommentModel.delCommentById(commentId, author)
+		    .then(function () {
+		      req.flash('success', '删除留言成功');
+		      // 删除成功后跳转到上一页
+		      res.redirect('back');
+		    })
+		    .catch(next);
+		});
+		
+
+
+-  补充一下,我们在`model/posts.js`里面,我们增加一个`addCommentsCount`方法用于获取文章的评论数
+
+
+		// 给 post 添加留言数 commentsCount
+		
+		var CommentModel = require('./comments');
+		Post.plugin('addCommentsCount', {
+		  afterFind: function (posts) {
+		    return Promise.all(posts.map(function (post) {
+		      return CommentModel.getCommentsCount(post._id).then(function (commentsCount) {
+		        post.commentsCount = commentsCount;
+		        return post;
+		      });
+		    }));
+		  },
+		  afterFindOne: function (post) {
+		    if (post) {
+		      return CommentModel.getCommentsCount(post._id).then(function (count) {
+		        post.commentsCount = count;
+		        return post;
+		      });
+		    }
+		    return post;
+		  }
+		});
+
+`addCommentsCount` 用来给每篇文章添加留言数 `commentsCount`,在 `getPostById `和`getPosts`方法里的`.addCreatedAt()`后面把这个方法加进去就可以了!
+我们来看一下效果,点开文章的详细页
+
+成功发表留言:
+
+![](http://p1.bpimg.com/567571/81cb3cc986f22fe4.png)
+
+成功删除留言:
+
+![](http://p1.bqimg.com/567571/2828120c4c82b12c.png)
+
+> 功能,我们基本完善了,我们对现在内容进行一次完整操作
+
+
+
+***
+
+#### 8 完成404与相关错误处理
