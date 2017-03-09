@@ -1,5 +1,8 @@
 //var express = require('express');
 //var router = express.Router();
+
+//var UserModel = require('../models/users');
+//var checkNotLogin = require('../middlewares/check').checkNotLogin;
 //
 ///* GET home page. */
 //router.get('/', function(req, res, next) {

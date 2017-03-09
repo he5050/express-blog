@@ -7,7 +7,8 @@
 - Express `v4.14.1`
 - MongoDB `v3.4.2`
 
-## 1. 安装Express并进行初始化
+##  1. 安装Express并进行初始化
+
 express 是 Node.js 上最流行的 Web 开发框架，正如他的名字一样，使用它我们可以快速的开发一个 Web 应用。我们用 express 来搭建我们的博客，打开命令行，输入：
 
 `npm install express -g`
@@ -15,7 +16,9 @@ express 是 Node.js 上最流行的 Web 开发框架，正如他的名字一样�
 安装express-generator工具
 
 `npm install -g express-generator`
-1. 进入您要创建的的目录
+
+1.  进入您要创建的的目录
+
 > 我自己用的系统是 win7
 
 
@@ -1198,106 +1201,106 @@ module.exports = {
  
  ***
 
-	var fs = require('fs');
-	var path1 = require('path');
-	var sha1 = require('sha1');
-
-	var express = require('express');
-	var router = express.Router();
-
-	var UserModel = require('../models/users');
-	var checkNotLogin = require('../middlewares/check').checkNotLogin;
+		var fs = require('fs');
+		var path1 = require('path');
+		var sha1 = require('sha1');
 	
-	// GET /signup 注册页
-	router.get('/',checkNotLogin ,function(req, res, next) {
-		console.log('进入注册页面');
-		//res.send('进入注册页面')
-	  res.render('signup');
-	});
-	// POST /signup 用户注册
-	router.post('/', checkNotLogin, function(req, res, next) {
-		console.log('正在进行注册');
-		console.log('提取字段');
-		var name = req.fields.name;
-		var gender = req.fields.gender;
-		var bio = req.fields.bio;
-		//console.log(path1.sep);
-		var avatar = req.files.avatar.path.split(path1.sep).pop();
-		//var avatar = req.files.avatar.path;
-		//console.log(avatar);
-		//return false;
-		//'foo\\bar\\baz'.split(path.sep) 得到 ['foo', 'bar', 'baz'] 在使用pop方法得到最后一个
-		var password = req.fields.password;
-		var repassword = req.fields.repassword;
-		console.log('校验字段');
-		//验证
-		try{
-			if(!(name.length >= 1 && name.length <=10)){
-				throw new Error('用户名必须限制在1-10个字符');
-			}
-			if(['m','f','x'].indexOf(gender) === -1){
-				throw new Error('性别只能是 男、女、保密');
-			}
-			if(!(bio.length >=1 && bio.length <= 30)){
-				throw new Error('个人简介只能限制在1-30个字符')
-			}
-			if(!req.files.avatar.name){
-				throw new Error('请上头像');
-			}
-			if(password.length <=6){
-				throw new Error('密码至少6个字符');
-			}
-			if(password !== repassword){
-				throw new Error('两次输入密码不一致');
-			}
-		}catch(e){
-			console.log('校验字段失败');
-			//注册失败
-			fs.unlink(req.files.avatar.path);//删除已上传的头像
-			req.flash('error',e.message);//显示错误信息
-			return res.redirect('./signup');//跳转到注册页面
-		}
+		var express = require('express');
+		var router = express.Router();
+	
+		var UserModel = require('../models/users');
+		var checkNotLogin = require('../middlewares/check').checkNotLogin;
 		
-		//验证通过
-		//对密码进行加密操作
-		password = sha1(password);
-		
-		//组建用户信息
-		var user = {
-			name : name,
-			password : password,
-			gender : gender,
-			bio : bio,
-			avatar : avatar
-		};
-		//把用户信息写入数据库
-		UserModel.create(user)
-			.then(function(result){
-				console.log('成功写入数据库');
-				//返回user 写入mongodb后的值,包含 _id
-				user = result.ops[0];
-				//把用户信息写入到seesion当中,不过要先删除密码才行
-				delete user.password;
-				req.session.user = user;
-				//写入到flash 通知信息
-				req.flash('success','恭喜您注册成功');
-				res.redirect('/posts');//进入主页
-			})
-			.catch(function(e){
-				//写入数据库失败
-				fs.unlink(req.files.avatar.path);
-				//判断是否是应为用户名重复
-				if(e.message.match('E11000 duplicate key')){
-					req.flash('error','用户名不可用');
-					return res.redirect('./signup');
+		// GET /signup 注册页
+		router.get('/',checkNotLogin ,function(req, res, next) {
+			console.log('进入注册页面');
+			//res.send('进入注册页面')
+		  res.render('signup');
+		});
+		// POST /signup 用户注册
+		router.post('/', checkNotLogin, function(req, res, next) {
+			console.log('正在进行注册');
+			console.log('提取字段');
+			var name = req.fields.name;
+			var gender = req.fields.gender;
+			var bio = req.fields.bio;
+			//console.log(path1.sep);
+			var avatar = req.files.avatar.path.split(path1.sep).pop();
+			//var avatar = req.files.avatar.path;
+			//console.log(avatar);
+			//return false;
+			//'foo\\bar\\baz'.split(path.sep) 得到 ['foo', 'bar', 'baz'] 在使用pop方法得到最后一个
+			var password = req.fields.password;
+			var repassword = req.fields.repassword;
+			console.log('校验字段');
+			//验证
+			try{
+				if(!(name.length >= 1 && name.length <=10)){
+					throw new Error('用户名必须限制在1-10个字符');
 				}
-				next(e);
-			});
-	  //res.send(req.flash());
-	});
-	module.exports = router;
-	
-	
+				if(['m','f','x'].indexOf(gender) === -1){
+					throw new Error('性别只能是 男、女、保密');
+				}
+				if(!(bio.length >=1 && bio.length <= 30)){
+					throw new Error('个人简介只能限制在1-30个字符')
+				}
+				if(!req.files.avatar.name){
+					throw new Error('请上头像');
+				}
+				if(password.length <=6){
+					throw new Error('密码至少6个字符');
+				}
+				if(password !== repassword){
+					throw new Error('两次输入密码不一致');
+				}
+			}catch(e){
+				console.log('校验字段失败');
+				//注册失败
+				fs.unlink(req.files.avatar.path);//删除已上传的头像
+				req.flash('error',e.message);//显示错误信息
+				return res.redirect('./signup');//跳转到注册页面
+			}
+			
+			//验证通过
+			//对密码进行加密操作
+			password = sha1(password);
+			
+			//组建用户信息
+			var user = {
+				name : name,
+				password : password,
+				gender : gender,
+				bio : bio,
+				avatar : avatar
+			};
+			//把用户信息写入数据库
+			UserModel.create(user)
+				.then(function(result){
+					console.log('成功写入数据库');
+					//返回user 写入mongodb后的值,包含 _id
+					user = result.ops[0];
+					//把用户信息写入到seesion当中,不过要先删除密码才行
+					delete user.password;
+					req.session.user = user;
+					//写入到flash 通知信息
+					req.flash('success','恭喜您注册成功');
+					res.redirect('/posts');//进入主页
+				})
+				.catch(function(e){
+					//写入数据库失败
+					fs.unlink(req.files.avatar.path);
+					//判断是否是应为用户名重复
+					if(e.message.match('E11000 duplicate key')){
+						req.flash('error','用户名不可用');
+						return res.redirect('./signup');
+					}
+					next(e);
+				});
+		  //res.send(req.flash());
+		});
+		module.exports = router;
+		
+		
 	
 	
  
@@ -1311,3 +1314,127 @@ module.exports = {
 
 #### 7.1.4 登录与登出
 上面我们完成了`注册`功能,接下来我们要安成`登录`与`登出`功能
+
+1. 我们先来完成登出功能,因为我们刚刚已经注册了,同时设置了`session` 。
+要实现登出的功能,我们将要修改`routes/signout.js`
+
+	var express = require('express');
+	var router = express.Router();
+	
+	var checkLogin = require('../middlewares/check').checkLogin;
+	
+	// GET /signout 登出
+	router.get('/', checkLogin, function(req, res, next) {
+	  //清空session中的用户信息
+	  req.session.user = null;
+	  //弹出消息
+	  req.flash('success','成功登出');
+	  //跳转到到主页
+	  res.redirect('/posts');
+	});
+	
+	module.exports = router;
+
+效果如下:
+
+![](http://i1.piimg.com/567571/037021f34209040b.png)
+
+2. 是不是突然发现好简单,全都套路,我们接下来套路一下登录功能,修改`routes/signin`
+
+> 先把我们登录页面显示出来
+
+	
+	// GET /signin 登录页
+	router.get('/', checkNotLogin, function(req, res, next) {
+	  res.render('signin');
+	});
+
+![](http://i1.piimg.com/567571/d24c11abd91a340f.png)
+
+> 现在我们的登录页面是OK的
+
+3. 下面我们要进行登录操作,也就是登录验证
+
+ - 3.1 在进行登录验证的时候,我们在在`user`模型中增加一个获取用户信息的方法
+ 
+ 打开`models/users.js`,增加一个`getUserByName`的方法
+ ```
+	var User = require('../lib/mongo').User;
+	
+	module.exports = {
+	  // 注册一个用户
+	  create: function create(user) {
+	    return User.create(user).exec();
+	  },
+	
+	  // 通过用户名获取用户信息 后面自己写了一个方法
+	  getUserByName: function getUserByName(name) {
+	    return User
+	      .findOne({ name: name })
+	      .addCreatedAt()
+	      .exec();
+	  }
+	};
+ ```
+ -  3.2 上面我们使用一个自定义的`addCreatedAt` 自定义的插件(通过`seesion`当中的`_id`,生成时间戳)
+ 
+打开`lib/mongo.js`添加我们自定义的插件
+
+```
+		var moment = require('moment');
+		var objectIdToTimestamp = require('objectid-to-timestamp');
+		
+		// 根据 id 生成创建时间 created_at,返回结果 生成一个时间戳
+		mongolass.plugin('addCreatedAt', {
+		  afterFind: function (results) {
+		    results.forEach(function (item) {
+		      item.created_at = moment(objectIdToTimestamp(item._id)).format('YYYY-MM-DD HH:mm');
+		    });
+		    return results;
+		  },
+		  afterFindOne: function (result) {
+		    if (result) {
+		      result.created_at = moment(objectIdToTimestamp(result._id)).format('YYYY-MM-DD HH:mm');
+		    }
+		    return result;
+		  }
+		});
+```
+ - 3.3 下面我们就开始进行验证,打开`routes/signin.js`,在下面对`router.post`方法进行修改
+ 
+		 router.post('/', checkNotLogin, function(req, res, next) {
+			console.log('正在登录当中....');
+		  var name = req.fields.name;
+		  var password = req.fields.password;
+		
+		  UserModel.getUserByName(name)
+		    .then(function (user) {
+		      if (!user) {
+		        req.flash('error', '用户不存在');
+		        return res.redirect('back');
+		      }
+		      // 检查密码是否匹配
+		      if (sha1(password) !== user.password) {
+		        req.flash('error', '用户名或密码错误');
+		        return res.redirect('back');
+		      }
+		      req.flash('success', '登录成功');
+		      // 用户信息写入 session
+		      delete user.password;
+		      req.session.user = user;
+		      // 跳转到主页
+		      res.redirect('/posts');
+		    })
+		    .catch(next);
+		});
+		
+
+下面 我们来看一下效果怎么样:
+
+![](http://i1.piimg.com/567571/0db442fde20773fc.png)
+
+> 这里面基本的权限控制完成了,回头看一下`注册`,`登录`,`登出`这些功能是否OK
+下面就开始我们文章操作模块
+
+***
+

@@ -8,6 +8,8 @@ var router = express.Router();
 var UserModel = require('../models/users');
 var checkNotLogin = require('../middlewares/check').checkNotLogin;
 
+console.log('加载了 注册模块');
+console.log('signup get');
 // GET /signup 注册页
 router.get('/',checkNotLogin ,function(req, res, next) {
 	console.log('进入注册页面');
@@ -15,6 +17,7 @@ router.get('/',checkNotLogin ,function(req, res, next) {
   res.render('signup');
 });
 // POST /signup 用户注册
+console.log('signup post');
 router.post('/', checkNotLogin, function(req, res, next) {
 	console.log('正在进行注册');
 	console.log('提取字段');
@@ -95,4 +98,5 @@ router.post('/', checkNotLogin, function(req, res, next) {
 		});
   //res.send(req.flash());
 });
+console.log('signup 结束');
 module.exports = router;
